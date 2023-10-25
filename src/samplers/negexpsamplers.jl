@@ -4,7 +4,7 @@
 Efficiently samples from a Bernoulli(exp(-x)) distribution
 assumes x is a rational number in [0,1]
 """
-function sample_bounded_neg_exp_bernoulli(rng::AbstractRNG, x::Rational)
+function sample_bounded_neg_exp_bernoulli(rng::AbstractRNG, x::NegExpShortcut)
     @assert 0 <= x <= 1
     k = 1
     while true
@@ -23,7 +23,8 @@ end
 Efficiently samples from a Bernoulli(exp(-x)) distribution
 assumes x is a rational number >= 0
 """
-function sample_neg_exp_bernoulli(rng::AbstractRNG, x::Rational)
+function rand(rng::AbstractRNG, s::NegExpBernoulli)
+    x = s.x
     while x > 1
         if sample_bounded_neg_exp_bernoulli(rng, 1//1) == 1
             x -= 1
@@ -33,21 +34,26 @@ function sample_neg_exp_bernoulli(rng::AbstractRNG, x::Rational)
     end
     return sample_bounded_neg_exp_bernoulli(rng, x)
 end
+
+struct NegExpGeometric{T<:Rational} <: Sampleable{Univariate, Discrete}
+    x::T
+end
+
 """
     sample_neg_exp_geometric(rng::AbstractRNG, x::Rational)
 
 Efficiently samples from a Geometric(1-exp(-x)) distribution
 """
-function sample_neg_exp_geometric(rng::AbstractRNG, x::Rational)
+function sample_neg_exp_geometric(rng::AbstractRNG, s::NegExpGeometric)
+    x = s.x
     if x == 0
         return 0
     end
     @assert x > 0
-
     t = denominator(x)
     while true
-        u = rand(rng,0:t)
-        b = sample_neg_exp_bernoulli(rng, u//t)
+        u = rand(rng, 0:t)
+        b = rand(rng, NegExpBernoulli(u//t))
         if b == 1
             break
         end

@@ -29,20 +29,14 @@ params(d::DiscreteLaplace) = (d.θ,)
 
 ### Sampling
 
-###     Helper functions 
-###      - sample_bounded_neg_exp_bernoulli
-###      - sample_neg_exp_bernoulli
-###      - 
-
-
-
 function rand(rng::AbstractRNG, d::DiscreteLaplace)
     scale = d.θ
     while true
         sign = rand(rng, Bernoulli(1//2))
-        magnitude = sample_neg_exp_geometric(rng, 1//scale)
+        magnitude = rand(rng, NegExpGeometric(1//scale))
         if sign == 1 && magnitude == 0 
             continue
         end
-        return magnitude *(1 - 2*sign)
+        return magnitude * (1 - 2*sign)
+    end
 end
